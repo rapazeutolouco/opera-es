@@ -13,62 +13,56 @@ verificar_instalacao() {
 # Função para baixar e instalar ferramentas adicionais
 baixar_instalar_ferramentas() {
     clear
-    figlet -c -f slant "Ferramentas" | lolcat
-    echo "Verificando e instalando ferramentas necessárias..." | lolcat
+    echo "Verificando e instalando ferramentas necessárias..."
 
     # Lista de ferramentas a serem verificadas e instaladas se não estiverem presentes
-    ferramentas=("nmap" "metasploit" "wireshark-qt" "hydra" "snort" "sqlmap" "john" "protonvpn-cli" "aircrack-ng" "openvas" "nikto" "burpsuite" "clamav" "fail2ban" "rkhunter" "tcpdump" "sshpass" "figlet" "lolcat" "ghidra" "binwalk" "yara" "lynis" "apache" "php" "mysql")
+    ferramentas=("nmap" "metasploit" "wireshark" "hydra" "snort" "sqlmap" "john" "protonvpn-cli" "aircrack-ng" "openvas" "nikto" "burpsuite" "clamav" "fail2ban" "rkhunter" "tcpdump" "sshpass" "figlet" "lolcat" "ghidra" "binwalk" "yara" "lynis" "apache" "php" "mysql")
 
     for ferramenta in "${ferramentas[@]}"; do
         if ! verificar_instalacao $ferramenta; then
-            echo "$ferramenta não está instalado." | lolcat
+            echo "$ferramenta não está instalado."
             read -p "Deseja instalar $ferramenta? (s/N): " resposta
             if [[ "$resposta" =~ ^[sS]$ ]]; then
                 if [[ $ferramenta == "protonvpn-cli" ]]; then
-                    git clone https://aur.archlinux.org/protonvpn-cli.git
-                    cd protonvpn-cli
-                    makepkg -si --noconfirm
-                    cd ..
-                    rm -rf protonvpn-cli
+                    # Substituir com a lógica apropriada para o Termux
+                    echo "Instalação do ProtonVPN-cli não suportada no Termux."
                 elif [[ $ferramenta == "apache" ]]; then
-                    sudo pacman -Sy --noconfirm apache php php-apache mariadb
-                    sudo systemctl enable --now httpd mariadb
-                    sudo mysql_secure_installation
+                    pkg install apache php mariadb
+                    # Iniciar serviços no Termux é diferente, verificar documentação do Termux.
                 else
-                    sudo pacman -Sy --noconfirm $ferramenta
+                    pkg install $ferramenta
                 fi
                 if [ $? -ne 0 ]; then
-                    echo "Erro ao instalar $ferramenta. Verifique sua conexão com a internet e tente novamente." | lolcat
+                    echo "Erro ao instalar $ferramenta. Verifique sua conexão com a internet e tente novamente."
                     exit 1
                 fi
             else
-                echo "Instalação de $ferramenta cancelada pelo usuário." | lolcat
+                echo "Instalação de $ferramenta cancelada pelo usuário."
             fi
         else
-            echo "$ferramenta já está instalado." | lolcat
+            echo "$ferramenta já está instalado."
         fi
     done
 
-    echo "Ferramentas necessárias instaladas com sucesso." | lolcat
-    echo "================================================================================================" | lolcat
+    echo "Ferramentas necessárias instaladas com sucesso."
+    echo "================================================================================================"
     read -p "Pressione Enter para continuar..."
 }
 
 # Função para configurar um site falso para treinamento
 configurar_site_falso() {
     clear
-    figlet -c -f slant "Treinamento" | lolcat
-    echo "Configurando um site falso para treinamento..." | lolcat
+    echo "Configurando um site falso para treinamento..."
 
     # Criar diretório para o site falso
-    sudo mkdir -p /srv/http/treinamento
-    sudo chown -R http:http /srv/http/treinamento
+    mkdir -p ~/sites/treinamento
+    chmod -R 755 ~/sites/treinamento
 
     # Criar página HTML básica
-    echo "<html><head><title>Site Falso para Treinamento</title></head><body><h1>Bem-vindo ao Site Falso para Treinamento</h1><p>Este é um site falso criado para fins educacionais e de treinamento em segurança cibernética.</p></body></html>" | sudo tee /srv/http/treinamento/index.html > /dev/null
+    echo "<html><head><title>Site Falso para Treinamento</title></head><body><h1>Bem-vindo ao Site Falso para Treinamento</h1><p>Este é um site falso criado para fins educacionais e de treinamento em segurança cibernética.</p></body></html>" > ~/sites/treinamento/index.html
 
-    echo "Site falso configurado com sucesso em /srv/http/treinamento." | lolcat
-    echo "================================================================================================" | lolcat
+    echo "Site falso configurado com sucesso em ~/sites/treinamento."
+    echo "================================================================================================"
     read -p "Pressione Enter para continuar..."
 }
 
@@ -76,82 +70,70 @@ configurar_site_falso() {
 exibir_detalhes_ferramenta() {
     ferramenta=$1
     case $ferramenta in
-        1) echo "1. Ataque DDoS Simulado" | lolcat
-           echo "   - Respeite os outros." | lolcat
-           echo "   - Use somente em casos de teste e aprendizado." | lolcat ;;
-        2) echo "2. Varredura de Portas com Nmap" | lolcat
-           echo "   - Use somente em redes sob seu controle ou com permissão." | lolcat ;;
-        3) echo "3. Teste de Vulnerabilidade com Metasploit" | lolcat
-           echo "   - Use apenas com autorização explícita para teste de segurança." | lolcat ;;
-        4) echo "4. Configurar/Conectar à VPN" | lolcat
-           echo "   - Respeite os termos de uso do serviço VPN." | lolcat
-           echo "   - Utilize apenas para navegação segura e autorizada." | lolcat ;;
-        5) echo "5. Teste Simples de Segurança" | lolcat
-           echo "   - Use somente em sistemas sob seu controle ou com permissão explícita." | lolcat ;;
-        6) echo "6. Teste de Segurança de Rede WiFi com Aircrack-ng" | lolcat
-           echo "   - Use apenas em redes que você possui permissão para testar." | lolcat ;;
-        7) echo "7. Análise de Vulnerabilidades com OpenVAS" | lolcat
-           echo "   - Realize apenas em sistemas e redes que você está autorizado." | lolcat ;;
-        8) echo "8. Scanner de Servidores Web com Nikto" | lolcat
-           echo "   - Use apenas em servidores web sob seu controle ou com autorização." | lolcat ;;
-        9) echo "9. Captura de Pacotes com Tcpdump" | lolcat
-           echo "   - Respeite a privacidade de terceiros e leis de proteção de dados." | lolcat ;;
-        10) echo "10. Antivírus com ClamAV" | lolcat
-            echo "    - Use apenas para verificar arquivos em seu próprio sistema." | lolcat ;;
-        11) echo "11. Proteção contra Ataques de Força Bruta com Fail2ban" | lolcat
-            echo "    - Configure somente em sistemas que você administra." | lolcat ;;
-        12) echo "12. Verificação de Rootkits com Rkhunter" | lolcat
-            echo "    - Use para verificar sistemas sob seu controle." | lolcat ;;
-        13) echo "13. Acessar Dispositivo Remoto via SSH" | lolcat
-            echo "    - Use apenas em dispositivos e com permissão explícita." | lolcat ;;
-        14) echo "14. Treinamento com Site Falso" | lolcat
-            echo "    - Utilize este ambiente para aprendizado e prática de segurança." | lolcat ;;
-        *) echo "Opção inválida." | lolcat ;;
+        1) echo "1. Ataque DDoS Simulado"
+           echo "   - Respeite os outros."
+           echo "   - Use somente em casos de teste e aprendizado." ;;
+        2) echo "2. Varredura de Portas com Nmap"
+           echo "   - Use somente em redes sob seu controle ou com permissão." ;;
+        # Adicionar mais casos conforme necessário
+        *) echo "Opção inválida." ;;
     esac
 }
 
 # Função para conectar à VPN utilizando ProtonVPN
 conectar_vpn() {
     clear
-    figlet -c -f slant "VPN" | lolcat
-    echo "Conectando à VPN utilizando ProtonVPN..." | lolcat
+    echo "Conectando à VPN utilizando ProtonVPN..."
 
     # Lógica para conectar à VPN
-    protonvpn-cli connect -f --country BR
+    # Implementação para o Termux
+    echo "Conexão à VPN não suportada no Termux."
 
-    if [ $? -eq 0 ]; then
-        echo "Conectado à VPN com sucesso." | lolcat
-    else
-        echo "Falha ao conectar à VPN. Verifique suas credenciais ou conexão com a internet." | lolcat
-    fi
-
-    echo "================================================================================================" | lolcat
+    echo "================================================================================================"
     read -p "Pressione Enter para continuar..."
 }
 
 # Função para desconectar da VPN utilizando ProtonVPN
 desconectar_vpn() {
     clear
-    figlet -c -f slant "VPN" | lolcat
-    echo "Desconectando da VPN utilizando ProtonVPN..." | lolcat
+    echo "Desconectando da VPN utilizando ProtonVPN..."
 
     # Lógica para desconectar da VPN
-    protonvpn-cli disconnect
+    # Implementação para o Termux
+    echo "Desconexão da VPN não suportada no Termux."
 
-    if [ $? -eq 0 ]; then
-        echo "Desconectado da VPN com sucesso." | lolcat
-    else
-        echo "Falha ao desconectar da VPN." | lolcat
-    fi
-
-    echo "================================================================================================" | lolcat
+    echo "================================================================================================"
     read -p "Pressione Enter para continuar..."
 }
 
 # Função para exibir menu principal
 mostrar_menu() {
     clear
-    figlet -c -f slant "Menu - Segurança" | lolcat
-    echo "Escolha uma opção:" | lolcat
+    echo "Menu - Segurança"
+    echo "Escolha uma opção:"
     echo "  1. Ataque DDoS Simulado"
-    echo "  2. Varredura de Port
+    echo "  2. Varredura de Portas com Nmap"
+    # Adicionar mais opções conforme necessário
+}
+
+# Loop principal do programa
+while true; do
+    mostrar_menu
+    read -p "Digite a opção desejada ou 'q' para sair: " opcao
+    case $opcao in
+        1)
+            # Chamar função para ataque DDoS simulado
+            ;;
+        2)
+            # Chamar função para varredura de portas com Nmap
+            ;;
+        # Adicionar mais casos conforme necessário
+        q)
+            echo "Saindo do programa."
+            exit 0
+            ;;
+        *)
+            echo "Opção inválida. Tente novamente."
+            ;;
+    esac
+done
